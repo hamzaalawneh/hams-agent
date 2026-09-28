@@ -4,6 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import prettierConfig from 'eslint-config-prettier'
+import oxlint from 'eslint-plugin-oxlint'
 
 export default tseslint.config(
   { ignores: ['dist'] },
@@ -28,4 +29,7 @@ export default tseslint.config(
     },
   },
   prettierConfig,
+  // oxlint runs first (fast pass); this turns off any ESLint rule oxlint
+  // already covers so the two never disagree or double-report.
+  ...oxlint.buildFromOxlintConfigFile('./.oxlintrc.json'),
 )
