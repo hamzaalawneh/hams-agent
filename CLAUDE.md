@@ -22,7 +22,7 @@ is a scripted fake built against a fixed `VoiceSession` interface.
   runtime theme switching (brand / white-label / dark), and screen-reader-friendly
   state changes from the start.
 - **Structure:** each screen lives in its own folder under `src/screens/<Screen>/`
-  with `index.tsx`, `<Screen>.styles.css`, and `<Screen>.types.ts`. Shared logic
+  with `index.tsx`, `styles.css`, and `types.ts`. Shared logic
   (session, audio engine, hooks) lives outside `screens/`, not duplicated per screen.
 - **Explain every line.** Whatever is written here (by a human or an AI assistant)
   needs to be understood well enough to explain and change live.
