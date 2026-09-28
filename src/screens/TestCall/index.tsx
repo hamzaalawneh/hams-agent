@@ -34,6 +34,13 @@ export function TestCallScreen() {
         <div className="test-call__controls">
           <ThemeSwitcher />
           <LanguageToggle />
+          <p className="test-call__mic" role="status">
+            {inCall && mic.micLabel && (
+              <>
+                {t('permission.using')} <bdi>{mic.micLabel}</bdi>
+              </>
+            )}
+          </p>
         </div>
       </header>
 

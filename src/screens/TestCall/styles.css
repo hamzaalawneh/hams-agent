@@ -18,9 +18,21 @@
 }
 
 .test-call__controls {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Sits under the theme/language buttons without taking space, so nothing moves when it shows. */
+.test-call__mic {
+  position: absolute;
+  inset-block-start: calc(100% + 8px);
+  inset-inline-end: 0;
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 .test-call__main {
@@ -58,12 +70,6 @@
   flex-direction: column;
   align-items: center;
   min-block-size: 96px;
-}
-
-.test-call__title {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 600;
 }
 
 /* ---- During a call ---- */
