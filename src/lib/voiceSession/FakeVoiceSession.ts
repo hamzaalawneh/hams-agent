@@ -1,5 +1,5 @@
 import { SPEECH_LEVEL } from '@constants/audio'
-import type { Lang } from '@lib/i18n/LanguageProvider'
+import type { Lang } from '@lib/i18n/context'
 import { readLevel } from '@utils/audio'
 import { AGENT_LINES, type AgentLine } from './script'
 import type { AgentState, Caption, CallState, Metrics, VoiceSession } from './types'
@@ -15,6 +15,12 @@ const NEW_STRETCH_MS = 250 // a gap longer than this starts a new stretch of voi
 /** The demo switch from the brief: degrade the network on purpose. Not part of the contract. */
 export type NetworkCondition = 'good' | 'poor'
 
+/** The contract, plus two demo controls only the fake has. */
+export type FakeVoiceSession = VoiceSession & {
+  setNetwork(condition: NetworkCondition): void
+  dropConnection(): void
+}
+
 type Events = {
   state: CallState
   agentState: AgentState
@@ -23,7 +29,15 @@ type Events = {
   metrics: Metrics
 }
 
-/** The line the agent is saying (or paused in the middle of), so captions can follow the audio. */
+/** Everything audio, created when the call connects. */
+type AudioGraph = {
+  ctx: AudioContext
+  micAnalyser: AnalyserNode
+  micSource: MediaStreamAudioSourceNode | null
+  output: MediaStreamAudioDestinationNode // the agent's voice, sent to the app as a track
+}
+
+/** The line the agent is saying (or paused in the middle of). */
 type Speech = {
   line: AgentLine
   clip: AudioBuffer
@@ -39,254 +53,240 @@ type Speech = {
  * If the user talks over the agent, it pauses, and carries on once they've finished.
  * It never stops the mic tracks. The mic belongs to the caller (useMicrophone).
  */
-export class FakeVoiceSession implements VoiceSession {
-  private lines: AgentLine[]
-  private listeners: { [E in keyof Events]: Set<(value: Events[E]) => void> } = {
+export function createFakeVoiceSession(lang: Lang): FakeVoiceSession {
+  const lines = AGENT_LINES[lang]
+  const listeners: { [E in keyof Events]: Set<(value: Events[E]) => void> } = {
     state: new Set(),
     agentState: new Set(),
     agentAudio: new Set(),
     transcript: new Set(),
     metrics: new Set(),
   }
+  const timers = new Set<number>()
+  const micSamples = new Float32Array(512)
 
-  private ctx: AudioContext | null = null
-  private micSource: MediaStreamAudioSourceNode | null = null
-  private micAnalyser: AnalyserNode | null = null
-  private micSamples = new Float32Array(512)
-  private agentOutput: MediaStreamAudioDestinationNode | null = null
-  private playing: AudioBufferSourceNode | null = null
-  private speech: Speech | null = null
-  private timers = new Set<number>()
+  let audio: AudioGraph | null = null
+  let playing: AudioBufferSourceNode | null = null
+  let speech: Speech | null = null
 
-  private callState: CallState = 'connecting'
-  private agentState: AgentState = 'listening'
-  private network: NetworkCondition = 'good'
-  private muted = false
-  private userTalking = false
-  private voiceStartedAt = 0
-  private lastVoiceAt = 0
-  private nextLine = 0
-  private ended = false
+  let callState: CallState = 'connecting'
+  let agentState: AgentState = 'listening'
+  let network: NetworkCondition = 'good'
+  let muted = false
+  let userTalking = false
+  let voiceStartedAt = 0
+  let lastVoiceAt = 0
+  let nextLine = 0
+  let ended = false
 
-  constructor(lang: Lang) {
-    this.lines = AGENT_LINES[lang]
+  // ---- Events and timers ----
+
+  function emit<E extends keyof Events>(event: E, value: Events[E]) {
+    listeners[event].forEach((callback) => callback(value))
+  }
+
+  function setCallState(state: CallState) {
+    callState = state
+    emit('state', state)
+  }
+
+  function setAgentState(state: AgentState) {
+    agentState = state
+    emit('agentState', state)
+  }
+
+  function after(ms: number, callback: () => void) {
+    const id = window.setTimeout(() => {
+      timers.delete(id)
+      callback()
+    }, ms)
+    timers.add(id)
+  }
+
+  function every(ms: number, callback: () => void) {
+    timers.add(window.setInterval(callback, ms))
+  }
+
+  // ---- Listening ----
+
+  function attachMic(mic: MediaStream) {
+    if (!audio) return
+    audio.micSource?.disconnect()
+    audio.micSource = audio.ctx.createMediaStreamSource(mic)
+    audio.micSource.connect(audio.micAnalyser)
+  }
+
+  function listenForUser() {
+    if (!audio || agentState === 'thinking' || muted) return
+
+    // While the agent talks, the mic may also pick up its voice from the speakers.
+    // Echo cancellation removes most of it; a higher bar ignores what's left.
+    const agentTalking = agentState === 'speaking'
+    const threshold = agentTalking ? SPEECH_LEVEL * 2 : SPEECH_LEVEL
+    const now = performance.now()
+
+    if (readLevel(audio.micAnalyser, micSamples) > threshold) {
+      if (!userTalking || now - lastVoiceAt > NEW_STRETCH_MS) voiceStartedAt = now
+      userTalking = true
+      lastVoiceAt = now
+      // The user talks over the agent: pause it (barge-in).
+      if (agentTalking && now - voiceStartedAt > BARGE_IN_MS) pauseSpeech()
+      return
+    }
+
+    // The user has finished their turn.
+    if (userTalking && now - lastVoiceAt > END_OF_TURN_MS) {
+      userTalking = false
+      if (agentTalking) return // just a noise over the agent, not a real interruption
+      if (speech) {
+        play(speech.pausedAt) // we were interrupted: carry on from where we stopped
+      } else {
+        setAgentState('thinking')
+        after(REPLY_AFTER_MS - END_OF_TURN_MS, () => void speak())
+      }
+    }
+  }
+
+  /** Shows as many words as the audio has reached (a partial caption). */
+  function revealCaption() {
+    if (!audio || !speech || !playing) return // paused: the caption waits too
+    const progress = (audio.ctx.currentTime - speech.startedAt) / speech.clip.duration
+    const count = Math.min(speech.words.length, Math.floor(progress * speech.words.length) + 1)
+    if (count <= speech.shown) return
+
+    speech.shown = count
+    const text = speech.words.slice(0, count).join(' ')
+    emit('transcript', { speaker: 'agent', text, final: false })
+  }
+
+  // ---- Speaking ----
+
+  /** Starts the next line of the script. */
+  async function speak() {
+    if (!audio) return
+    const line = lines[nextLine++ % lines.length]
+    const clip = await loadClip(audio.ctx, line.audio)
+    if (ended) return
+
+    speech = { line, clip, words: line.text.split(' '), startedAt: 0, pausedAt: 0, shown: 0 }
+    play(0)
+  }
+
+  /** Plays the current line from `offset` seconds in. */
+  function play(offset: number) {
+    if (!audio || !speech) return
+    const current = speech
+
+    const source = audio.ctx.createBufferSource()
+    source.buffer = current.clip
+    source.connect(audio.output)
+    source.onended = () => {
+      // Stopped by a pause or a hang-up rather than reaching the end: nothing to finish.
+      if (ended || playing !== source) return
+      playing = null
+      speech = null
+      emit('transcript', { speaker: 'agent', text: current.line.text, final: true })
+      setAgentState('listening')
+    }
+    source.start(0, offset)
+
+    playing = source
+    current.startedAt = audio.ctx.currentTime - offset
+    setAgentState('speaking')
+  }
+
+  /** The user interrupted: stop the audio but remember where we were. */
+  function pauseSpeech() {
+    if (!audio || !speech || !playing) return
+    speech.pausedAt = audio.ctx.currentTime - speech.startedAt
+    const source = playing
+    playing = null // set first, so onended knows this isn't the natural end
+    source.stop()
+    setAgentState('listening')
   }
 
   // ---- The contract ----
 
-  async connect({ mic }: { agentId: string; mic: MediaStream }): Promise<void> {
-    this.setCallState('connecting')
+  async function connect({ mic }: { agentId: string; mic: MediaStream }) {
+    setCallState('connecting')
+    const ctx = new AudioContext()
+    const micAnalyser = ctx.createAnalyser()
+    micAnalyser.fftSize = micSamples.length
+    audio = { ctx, micAnalyser, micSource: null, output: ctx.createMediaStreamDestination() }
+    attachMic(mic)
 
-    this.ctx = new AudioContext()
-    this.micAnalyser = this.ctx.createAnalyser()
-    this.micAnalyser.fftSize = this.micSamples.length
-    this.agentOutput = this.ctx.createMediaStreamDestination()
-    this.attachMic(mic)
+    await new Promise<void>((resolve) => after(CONNECT_MS, resolve))
+    if (ended) return
 
-    await new Promise<void>((resolve) => this.after(CONNECT_MS, resolve))
-    if (this.ended) return
-
-    this.emit('agentAudio', this.agentOutput.stream.getAudioTracks()[0])
-    this.setCallState('connected')
-    this.every(TICK_MS, () => this.tick())
-    this.every(1000, () => {
-      if (this.callState === 'connected') this.emit('metrics', sampleMetrics(this.network))
+    emit('agentAudio', audio.output.stream.getAudioTracks()[0])
+    setCallState('connected')
+    every(TICK_MS, () => {
+      if (callState !== 'connected') return
+      listenForUser()
+      revealCaption()
     })
-    void this.speak() // the agent greets first
+    every(1000, () => {
+      if (callState === 'connected') emit('metrics', sampleMetrics(network))
+    })
+    void speak() // the agent greets first
   }
 
-  async replaceMic(mic: MediaStream): Promise<void> {
-    this.attachMic(mic)
-  }
-
-  setMuted(muted: boolean): void {
-    this.muted = muted
-  }
-
-  hangUp(): void {
-    if (this.ended) return
-    this.ended = true
-
+  function hangUp() {
+    if (ended) return
+    ended = true
     // clearTimeout also clears intervals: browsers share one id pool for both.
-    this.timers.forEach((id) => clearTimeout(id))
-    this.playing?.stop()
-    this.micSource?.disconnect()
-    this.agentOutput?.stream.getTracks().forEach((track) => track.stop())
-    void this.ctx?.close()
-
-    this.setCallState('ended')
+    timers.forEach((id) => clearTimeout(id))
+    playing?.stop()
+    if (audio) {
+      audio.micSource?.disconnect()
+      audio.output.stream.getTracks().forEach((track) => track.stop())
+      void audio.ctx.close()
+    }
+    setCallState('ended')
   }
 
-  on<E extends keyof Events>(event: E, callback: (value: Events[E]) => void): () => void {
-    this.listeners[event].add(callback)
-    return () => this.listeners[event].delete(callback)
+  function on<E extends keyof Events>(event: E, callback: (value: Events[E]) => void) {
+    listeners[event].add(callback)
+    return () => {
+      listeners[event].delete(callback)
+    }
   }
 
-  // ---- Demo controls (not part of the contract) ----
-
-  setNetwork(condition: NetworkCondition): void {
-    this.network = condition
-  }
+  // ---- Demo controls ----
 
   /**
    * Simulates the connection dropping, then coming back on its own.
    * Suspending the AudioContext freezes the agent mid-word; resuming carries on from the
    * same spot. Captions follow the audio clock, so they freeze and resume with it.
    */
-  dropConnection(): void {
-    if (this.callState !== 'connected') return
-    this.setCallState('reconnecting')
-    void this.ctx?.suspend()
-    this.after(RECONNECT_MS, () => {
-      void this.ctx?.resume()
-      this.setCallState('connected')
+  function dropConnection() {
+    if (callState !== 'connected') return
+    setCallState('reconnecting')
+    void audio?.ctx.suspend()
+    after(RECONNECT_MS, () => {
+      void audio?.ctx.resume()
+      setCallState('connected')
     })
   }
 
-  // ---- Every tick ----
-
-  private tick() {
-    if (this.callState !== 'connected') return
-    this.listenForUser()
-    this.revealCaption()
+  return {
+    connect,
+    replaceMic: async (mic) => attachMic(mic),
+    setMuted: (value) => {
+      muted = value
+    },
+    hangUp,
+    on,
+    setNetwork: (condition) => {
+      network = condition
+    },
+    dropConnection,
   }
+}
 
-  private attachMic(mic: MediaStream) {
-    if (!this.ctx || !this.micAnalyser) return
-    this.micSource?.disconnect()
-    this.micSource = this.ctx.createMediaStreamSource(mic)
-    this.micSource.connect(this.micAnalyser)
-  }
-
-  private listenForUser() {
-    if (this.agentState === 'thinking' || this.muted || !this.micAnalyser) return
-
-    // While the agent talks, the mic may also pick up its voice from the speakers.
-    // Echo cancellation removes most of it; a higher bar ignores what's left.
-    const agentTalking = this.agentState === 'speaking'
-    const threshold = agentTalking ? SPEECH_LEVEL * 2 : SPEECH_LEVEL
-    const now = performance.now()
-
-    if (readLevel(this.micAnalyser, this.micSamples) > threshold) {
-      if (!this.userTalking || now - this.lastVoiceAt > NEW_STRETCH_MS) this.voiceStartedAt = now
-      this.userTalking = true
-      this.lastVoiceAt = now
-      // The user talks over the agent: pause it (barge-in).
-      if (agentTalking && now - this.voiceStartedAt > BARGE_IN_MS) this.pauseSpeech()
-      return
-    }
-
-    // The user has finished their turn.
-    if (this.userTalking && now - this.lastVoiceAt > END_OF_TURN_MS) {
-      this.userTalking = false
-      if (agentTalking) return // just a noise over the agent, not a real interruption
-      if (this.speech) {
-        this.resumeSpeech() // we were interrupted: carry on from where we stopped
-      } else {
-        this.setAgentState('thinking')
-        this.after(REPLY_AFTER_MS - END_OF_TURN_MS, () => void this.speak())
-      }
-    }
-  }
-
-  /** Shows as many words as the audio has reached (a partial caption). */
-  private revealCaption() {
-    if (!this.speech || !this.playing || !this.ctx) return // paused: the caption waits too
-    const { words, startedAt } = this.speech
-    const progress = (this.ctx.currentTime - startedAt) / this.speech.clip.duration
-    const count = Math.min(words.length, Math.floor(progress * words.length) + 1)
-    if (count <= this.speech.shown) return
-
-    this.speech.shown = count
-    this.emit('transcript', {
-      speaker: 'agent',
-      text: words.slice(0, count).join(' '),
-      final: false,
-    })
-  }
-
-  // ---- Speaking ----
-
-  /** Starts the next line of the script. */
-  private async speak() {
-    if (!this.ctx) return
-    const line = this.lines[this.nextLine++ % this.lines.length]
-    const clip = await this.load(line.audio)
-    if (this.ended) return
-
-    this.speech = { line, clip, words: line.text.split(' '), startedAt: 0, pausedAt: 0, shown: 0 }
-    this.play(0)
-  }
-
-  /** Plays the current line from `offset` seconds in. */
-  private play(offset: number) {
-    if (!this.ctx || !this.agentOutput || !this.speech) return
-    const speech = this.speech
-
-    const source = this.ctx.createBufferSource()
-    source.buffer = speech.clip
-    source.connect(this.agentOutput)
-    source.onended = () => {
-      // Stopped by a pause or a hang-up rather than reaching the end: nothing to finish.
-      if (this.ended || this.playing !== source) return
-      this.playing = null
-      this.speech = null
-      this.emit('transcript', { speaker: 'agent', text: speech.line.text, final: true })
-      this.setAgentState('listening')
-    }
-    source.start(0, offset)
-
-    this.playing = source
-    speech.startedAt = this.ctx.currentTime - offset
-    this.setAgentState('speaking')
-  }
-
-  /** The user interrupted: stop the audio but remember where we were. */
-  private pauseSpeech() {
-    if (!this.ctx || !this.speech || !this.playing) return
-    this.speech.pausedAt = this.ctx.currentTime - this.speech.startedAt
-    const source = this.playing
-    this.playing = null // set first, so onended knows this isn't the natural end
-    source.stop()
-    this.setAgentState('listening')
-  }
-
-  private resumeSpeech() {
-    if (this.speech) this.play(this.speech.pausedAt)
-  }
-
-  private async load(url: string): Promise<AudioBuffer> {
-    const response = await fetch(url)
-    return this.ctx!.decodeAudioData(await response.arrayBuffer())
-  }
-
-  // ---- Small helpers ----
-
-  private setCallState(state: CallState) {
-    this.callState = state
-    this.emit('state', state)
-  }
-
-  private setAgentState(state: AgentState) {
-    this.agentState = state
-    this.emit('agentState', state)
-  }
-
-  private emit<E extends keyof Events>(event: E, value: Events[E]) {
-    this.listeners[event].forEach((callback) => callback(value))
-  }
-
-  private after(ms: number, callback: () => void) {
-    const id = window.setTimeout(() => {
-      this.timers.delete(id)
-      callback()
-    }, ms)
-    this.timers.add(id)
-  }
-
-  private every(ms: number, callback: () => void) {
-    this.timers.add(window.setInterval(callback, ms))
-  }
+async function loadClip(ctx: AudioContext, url: string): Promise<AudioBuffer> {
+  const response = await fetch(url)
+  return ctx.decodeAudioData(await response.arrayBuffer())
 }
 
 function between(min: number, max: number): number {

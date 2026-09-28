@@ -26,6 +26,8 @@
   --color-on-agent: #ffffff;
   --color-danger: #c2362b;
   --color-on-danger: #ffffff;
+  --color-ok: #2e8b57;
+  --color-warn: #b8700f;
 }
 
 /* White-label: a neutral, cooler base a customer can drop their brand colour into. */
@@ -44,6 +46,8 @@
   --color-on-agent: #ffffff;
   --color-danger: #c62828;
   --color-on-danger: #ffffff;
+  --color-ok: #2e7d32;
+  --color-warn: #a86300;
 }
 
 /* Dark: warm near-black so it still feels like the same product as the cream theme. */
@@ -62,4 +66,6 @@
   --color-on-agent: #161512;
   --color-danger: #ef6a5f;
   --color-on-danger: #161512;
+  --color-ok: #5cc98a;
+  --color-warn: #e8a33d;
 }

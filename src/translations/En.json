@@ -16,7 +16,6 @@
     "switchLabel": "Switch to Arabic"
   },
   "controls": {
-    "testCall": "Test call",
     "mute": "Mute",
     "unmute": "Unmute",
     "hangUp": "Hang up"

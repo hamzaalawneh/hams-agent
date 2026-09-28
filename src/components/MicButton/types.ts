@@ -1,7 +1,14 @@
 import type { Ref } from 'react'
 
 /** What the button is showing: before the call it's 'idle'; during the call, who's active. */
-export type MicActivity = 'idle' | 'listening' | 'user' | 'agent' | 'thinking' | 'muted'
+export type MicActivity =
+  | 'idle'
+  | 'waiting' // connecting or reconnecting
+  | 'listening'
+  | 'user'
+  | 'agent'
+  | 'thinking'
+  | 'muted'
 
 export type MicButtonProps = {
   ref?: Ref<HTMLButtonElement>

@@ -42,6 +42,11 @@
 
 /* ---- During a call ---- */
 
+/* Waiting on the connection: dimmed and still, so nothing suggests it's working yet. */
+.mic-button[data-activity='waiting'] {
+  opacity: 0.55;
+}
+
 /* You're talking: the halo follows your voice. */
 .mic-button[data-activity='user'] {
   --level: var(--user-level, 0);

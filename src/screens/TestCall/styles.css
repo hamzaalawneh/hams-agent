@@ -60,8 +60,24 @@
   background: var(--color-text-muted);
 }
 
+/* Green when fine, amber when it isn't. Never red: a weak network isn't an emergency. */
 .call-pill[data-state='connected']::before {
-  background: #2e9d5b;
+  background: var(--color-ok);
+}
+
+.call-pill[data-state='connected']:not([data-quality='good'])::before,
+.call-pill[data-state='reconnecting']::before {
+  background: var(--color-warn);
+}
+
+.call-pill[data-state='reconnecting']::before {
+  animation: call-pill-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes call-pill-pulse {
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .test-call__status {
