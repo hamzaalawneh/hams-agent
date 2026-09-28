@@ -1,2 +1,19 @@
 /* Styles for the TestCall screen. */
 /* Scaffold only — filled in during implementation. */
+
+.test-call-screen {
+  padding: 24px;
+  text-align: start; /* logical, not "left" — flips correctly under dir="rtl" */
+}
+
+.lang-toggle {
+  margin-inline-start: auto;
+  display: block;
+  font: inherit;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}

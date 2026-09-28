@@ -12,6 +12,10 @@ is a scripted fake built against a fixed `VoiceSession` interface.
 
 - **Depth over breadth.** Prefer a smaller set of things done well over everything
   done halfway. If scope is cut, say so (in the README's decision log), don't just drop it silently.
+- **Keep the code simple. Do not overengineer.** No abstractions, config layers,
+  or generic frameworks for problems this app doesn't have. Prefer the plain,
+  obvious solution over a flexible one. Add structure only when a second real
+  use case shows up, not in anticipation of one.
 - **Real audio only where it matters.** The microphone must be a real `getUserMedia`
   stream. The agent's voice and network conditions are simulated.
 - **Clean up after every call.** No leaked `MediaStreamTrack`s, `AudioContext`s, or

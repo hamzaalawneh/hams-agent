@@ -1,0 +1,17 @@
+{
+  "app.title": "Test Call",
+  "controls.testCall": "Test call",
+  "controls.mute": "Mute",
+  "controls.unmute": "Unmute",
+  "controls.hangUp": "Hang up",
+  "call.state.connecting": "Connecting…",
+  "call.state.connected": "Connected",
+  "call.state.reconnecting": "Reconnecting…",
+  "call.state.ended": "Call ended",
+  "agent.state.listening": "Listening",
+  "agent.state.thinking": "Thinking",
+  "agent.state.speaking": "Speaking",
+  "permission.explain": "We need your microphone to start the test call. Nothing is recorded or shared.",
+  "permission.denied": "Microphone access is blocked. Enable it in your browser's site settings and try again.",
+  "permission.noDevice": "No microphone was found. Connect one and try again."
+}

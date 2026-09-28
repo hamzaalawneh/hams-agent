@@ -1,0 +1,17 @@
+{
+  "app.title": "مكالمة تجريبية",
+  "controls.testCall": "مكالمة تجريبية",
+  "controls.mute": "كتم الصوت",
+  "controls.unmute": "إلغاء الكتم",
+  "controls.hangUp": "إنهاء المكالمة",
+  "call.state.connecting": "جارٍ الاتصال…",
+  "call.state.connected": "متصل",
+  "call.state.reconnecting": "جارٍ إعادة الاتصال…",
+  "call.state.ended": "انتهت المكالمة",
+  "agent.state.listening": "يستمع",
+  "agent.state.thinking": "يفكّر",
+  "agent.state.speaking": "يتحدث",
+  "permission.explain": "نحتاج إلى الميكروفون لبدء المكالمة التجريبية. لا يتم تسجيل أو مشاركة أي شيء.",
+  "permission.denied": "تم حظر الوصول إلى الميكروفون. فعّله من إعدادات المتصفح وحاول مرة أخرى.",
+  "permission.noDevice": "لم يتم العثور على ميكروفون. وصّل جهازاً وحاول مرة أخرى."
+}
