@@ -3,11 +3,13 @@
 Ground rules for working on this project (Hams.AI take-home: the in-browser test-call screen).
 
 ## What this is
+
 A React + TypeScript web app for a fake in-browser "test call" with a voice agent
 (mic in, fake agent audio + captions out). No real backend, no real AI — the agent
 is a scripted fake built against a fixed `VoiceSession` interface.
 
 ## Ground rules
+
 - **Depth over breadth.** Prefer a smaller set of things done well over everything
   done halfway. If scope is cut, say so (in the README's decision log), don't just drop it silently.
 - **Real audio only where it matters.** The microphone must be a real `getUserMedia`
@@ -22,17 +24,25 @@ is a scripted fake built against a fixed `VoiceSession` interface.
   runtime theme switching (brand / white-label / dark), and screen-reader-friendly
   state changes from the start.
 - **Structure:** each screen lives in its own folder under `src/screens/<Screen>/`
-  with `index.tsx`, `styles.css`, and `types.ts`. Shared logic
-  (session, audio engine, hooks) lives outside `screens/`, not duplicated per screen.
+  with `index.tsx`, `styles.css`, and `types.ts`.
+- **Components:** any reusable component goes under `src/components/<Component>/`,
+  with the same `index.tsx` / `styles.css` / `types.ts` split as screens. Don't
+  build one-off components inline inside a screen if it's reusable — give it its
+  own folder there instead.
+- **Utils:** shared, framework-agnostic helper functions (formatting, guards, small
+  calculations — not components, not hooks) go in `src/utils/`, one file per
+  concern. Don't duplicate a helper inside a screen or component if it belongs here.
 - **Explain every line.** Whatever is written here (by a human or an AI assistant)
   needs to be understood well enough to explain and change live.
 - **Commit as you go.** Small, real commits that show how the work evolved — no
   squashing history.
 
 ## Stack
+
 - React + TypeScript, Vite
 - No routing/state library assumed yet — keep dependencies minimal unless a real
   need shows up.
 
 ## Non-goals
+
 Real WebRTC backend, real speech/AI model, pixel-perfect branding.
