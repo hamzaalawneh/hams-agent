@@ -42,8 +42,10 @@ is a scripted fake built against a fixed `VoiceSession` interface.
 - React + TypeScript, Vite
 - No routing/state library assumed yet — keep dependencies minimal unless a real
   need shows up.
-- Linting is `oxlint` (Rust-based, fast) via `npm run lint` — no ESLint.
-  Formatting is Prettier (`npm run format` / `format:check`), set to run on
+- Package manager is **Yarn** (yarn.lock is the source of truth — don't add
+  package-lock.json back).
+- Linting is `oxlint` (Rust-based, fast) via `yarn lint` — no ESLint.
+  Formatting is Prettier (`yarn format` / `format:check`), set to run on
   save via `.vscode/settings.json` (needs the Prettier extension,
   recommended in `.vscode/extensions.json`).
 

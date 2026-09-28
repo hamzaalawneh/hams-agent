@@ -23,3 +23,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local planning notes — quotes the confidential assessment brief, not for submission
+PLAN.md
