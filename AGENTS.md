@@ -42,10 +42,8 @@ is a scripted fake built against a fixed `VoiceSession` interface.
 - React + TypeScript, Vite
 - No routing/state library assumed yet — keep dependencies minimal unless a real
   need shows up.
-- Linting: `oxlint` (fast, runs first) + ESLint (full ruleset) via
-  `eslint-plugin-oxlint`, so rules aren't checked twice. `npm run lint` runs
-  both, `npm run lint:fast` runs just oxlint. Formatting is Prettier
-  (`npm run format` / `format:check`).
+- Linting is `oxlint` (Rust-based, fast) via `npm run lint` — no ESLint.
+  Formatting is Prettier (`npm run format` / `format:check`).
 
 ## Non-goals
 
