@@ -1,17 +1,45 @@
 {
-  "app.title": "Test Call",
-  "controls.testCall": "Test call",
-  "controls.mute": "Mute",
-  "controls.unmute": "Unmute",
-  "controls.hangUp": "Hang up",
-  "call.state.connecting": "Connecting…",
-  "call.state.connected": "Connected",
-  "call.state.reconnecting": "Reconnecting…",
-  "call.state.ended": "Call ended",
-  "agent.state.listening": "Listening",
-  "agent.state.thinking": "Thinking",
-  "agent.state.speaking": "Speaking",
-  "permission.explain": "We need your microphone to start the test call. Nothing is recorded or shared.",
-  "permission.denied": "Microphone access is blocked. Enable it in your browser's site settings and try again.",
-  "permission.noDevice": "No microphone was found. Connect one and try again."
+  "app": {
+    "title": "Test Call"
+  },
+  "mic": {
+    "start": "Start test call",
+    "hint": "Tap the mic to talk to your agent"
+  },
+  "theme": {
+    "label": "Theme",
+    "brand": "Hams",
+    "whiteLabel": "White-label",
+    "dark": "Dark"
+  },
+  "lang": {
+    "switchTo": "العربية",
+    "switchLabel": "Switch to Arabic"
+  },
+  "controls": {
+    "testCall": "Test call",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "hangUp": "Hang up"
+  },
+  "call": {
+    "state": {
+      "connecting": "Connecting…",
+      "connected": "Connected",
+      "reconnecting": "Reconnecting…",
+      "ended": "Call ended"
+    }
+  },
+  "agent": {
+    "state": {
+      "listening": "Listening",
+      "thinking": "Thinking",
+      "speaking": "Speaking"
+    }
+  },
+  "permission": {
+    "explain": "We need your microphone to start the test call. Nothing is recorded or shared.",
+    "denied": "Microphone access is blocked. Enable it in your browser's site settings and try again.",
+    "noDevice": "No microphone was found. Connect one and try again."
+  }
 }

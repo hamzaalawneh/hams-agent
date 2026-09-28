@@ -11,6 +11,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      '@assets': src('assets'),
       '@lib': src('lib'),
       '@screens': src('screens'),
       '@components': src('components'),

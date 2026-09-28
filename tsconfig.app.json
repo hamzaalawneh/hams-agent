@@ -12,6 +12,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "paths": {
+      "@assets/*": ["./src/assets/*"],
       "@lib/*": ["./src/lib/*"],
       "@screens/*": ["./src/screens/*"],
       "@components/*": ["./src/components/*"],

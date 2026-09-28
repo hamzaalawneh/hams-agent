@@ -1,0 +1,38 @@
+.mic-button {
+  display: grid;
+  place-items: center;
+  inline-size: 128px;
+  block-size: 128px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  /* Soft halo in the accent colour so the button reads as "the one thing to press". */
+  box-shadow: 0 0 0 16px var(--color-accent-soft);
+  cursor: pointer;
+  transition:
+    transform 150ms,
+    box-shadow 150ms;
+}
+
+.mic-button__icon {
+  display: block;
+  inline-size: 40px;
+  block-size: 40px;
+  background-color: currentColor;
+  -webkit-mask: url('@assets/mic.svg') no-repeat center / contain;
+  mask: url('@assets/mic.svg') no-repeat center / contain;
+}
+
+.mic-button:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 0 20px var(--color-accent-soft);
+}
+
+.mic-button:active {
+  transform: scale(0.97);
+}
+
+.mic-button:focus-visible {
+  outline-offset: 22px;
+}

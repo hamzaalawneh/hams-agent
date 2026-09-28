@@ -1,0 +1,30 @@
+.theme-switcher {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+}
+
+.theme-switcher__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 44px; /* WCAG 2.5.5 touch target minimum */
+  padding-inline: 12px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+
+.theme-switcher__option[aria-pressed='true'] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}

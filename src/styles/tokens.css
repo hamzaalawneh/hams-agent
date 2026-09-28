@@ -1,0 +1,50 @@
+/*
+ * Colour tokens only. Components use these variables for anything that
+ * changes with the theme; switching data-theme on <html> re-skins the whole
+ * app at runtime. Spacing/radius/duration don't vary by theme, so they're
+ * just plain CSS values in each component's own stylesheet.
+ */
+
+:root {
+  --font-sans: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* Hams.AI brand: warm cream paper with the indigo from the logo. */
+:root,
+[data-theme='brand'] {
+  color-scheme: light;
+  --color-bg: #faf6ee;
+  --color-surface: #fffdf8;
+  --color-border: #e7dfcf;
+  --color-text: #1c1a17;
+  --color-text-muted: #6b6459;
+  --color-accent: #3a3eb8;
+  --color-accent-soft: rgb(58 62 184 / 0.14);
+  --color-on-accent: #ffffff;
+}
+
+/* White-label: a neutral, cooler base a customer can drop their brand colour into. */
+[data-theme='white-label'] {
+  color-scheme: light;
+  --color-bg: #f5f7f8;
+  --color-surface: #ffffff;
+  --color-border: #dfe4e7;
+  --color-text: #14191c;
+  --color-text-muted: #5d6a71;
+  --color-accent: #0f766e;
+  --color-accent-soft: rgb(15 118 110 / 0.14);
+  --color-on-accent: #ffffff;
+}
+
+/* Dark: warm near-black so it still feels like the same product as the cream theme. */
+[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #161512;
+  --color-surface: #201e1a;
+  --color-border: #34302a;
+  --color-text: #f3efe6;
+  --color-text-muted: #a39c8f;
+  --color-accent: #9296f5;
+  --color-accent-soft: rgb(146 150 245 / 0.18);
+  --color-on-accent: #161512;
+}

@@ -1,0 +1,9 @@
+/* Masked, not <img>: the SVG hardcodes near-black, masking lets it follow the theme. */
+.logo {
+  display: inline-block;
+  inline-size: 92px;
+  block-size: 28px;
+  background-color: currentColor;
+  -webkit-mask: url('@assets/hams-logo.svg') no-repeat center / contain;
+  mask: url('@assets/hams-logo.svg') no-repeat center / contain;
+}

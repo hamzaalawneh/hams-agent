@@ -1,11 +1,35 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 import en from '@translations/En.json'
 import ar from '@translations/Ar.json'
 
 export type Lang = 'en' | 'ar'
-export type TranslationKey = keyof typeof en
 
-const DICTIONARIES: Record<Lang, Record<TranslationKey, string>> = { en, ar }
+type Dictionary = typeof en
+
+// Turns { controls: { mute: string } } into the key union 'controls.mute'.
+type DotPaths<T> = {
+  [K in keyof T & string]: T[K] extends string ? K : `${K}.${DotPaths<T[K]>}`
+}[keyof T & string]
+
+export type TranslationKey = DotPaths<Dictionary>
+
+// Typing ar as Dictionary makes the build fail if Ar.json is missing a key En.json has.
+const DICTIONARIES: Record<Lang, Dictionary> = { en, ar }
+
+function lookup(dictionary: Dictionary, key: TranslationKey): string | undefined {
+  let node: unknown = dictionary
+  for (const part of key.split('.')) {
+    node = (node as Record<string, unknown> | undefined)?.[part]
+  }
+  return typeof node === 'string' ? node : undefined
+}
 const DIRECTIONS: Record<Lang, 'ltr' | 'rtl'> = { en: 'ltr', ar: 'rtl' }
 const STORAGE_KEY = 'hams-agent:lang'
 
@@ -29,7 +53,8 @@ function readStoredLang(): Lang {
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(readStoredLang)
 
-  useEffect(() => {
+  // Layout effect so dir="rtl" lands before first paint (no LTR→RTL jump on load).
+  useLayoutEffect(() => {
     document.documentElement.lang = lang
     document.documentElement.dir = DIRECTIONS[lang]
     try {
@@ -43,7 +68,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     () => ({
       lang,
       dir: DIRECTIONS[lang],
-      t: (key) => DICTIONARIES[lang][key] ?? key,
+      t: (key) => lookup(DICTIONARIES[lang], key) ?? key,
       setLang: setLangState,
     }),
     [lang],

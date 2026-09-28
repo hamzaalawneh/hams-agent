@@ -1,22 +1,29 @@
-import './styles.css'
+import { LanguageToggle } from '@components/LanguageToggle'
+import { Logo } from '@components/Logo'
+import { MicButton } from '@components/MicButton'
+import { ThemeSwitcher } from '@components/ThemeSwitcher'
 import { useLanguage } from '@lib/i18n/LanguageProvider'
+import './styles.css'
 import type { TestCallScreenProps } from './types'
 
-// Scaffold — call UI is implemented next. Language/RTL wiring is real already.
 export function TestCallScreen(_props: TestCallScreenProps) {
-  const { lang, t, setLang } = useLanguage()
+  const { t } = useLanguage()
 
   return (
-    <div className="test-call-screen">
-      <button
-        type="button"
-        className="lang-toggle"
-        onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}
-      >
-        {lang === 'en' ? 'العربية' : 'English'}
-      </button>
-      <h1>{t('app.title')}</h1>
-      <p>{t('controls.testCall')} — screen not implemented yet</p>
+    <div className="test-call">
+      <header className="test-call__header">
+        <Logo />
+        <div className="test-call__controls">
+          <ThemeSwitcher />
+          <LanguageToggle />
+        </div>
+      </header>
+
+      <main className="test-call__main">
+        <h1 className="test-call__title">{t('app.title')}</h1>
+        <MicButton label={t('mic.start')} />
+        <p className="test-call__hint">{t('mic.hint')}</p>
+      </main>
     </div>
   )
 }
