@@ -1,17 +1,21 @@
 .mic-button {
+  --size: 128px;
+  --halo-rest: 16px; /* halo width when nobody talks */
+  --halo-grow: 36px; /* extra width at full volume */
+  --halo: calc(var(--halo-rest) + var(--level) * var(--halo-grow));
   --level: 0; /* which live level drives the halo; picked per activity below */
   position: relative;
   display: grid;
   place-items: center;
-  inline-size: 128px;
-  block-size: 128px;
+  flex-shrink: 0;
+  inline-size: var(--size);
+  block-size: var(--size);
   margin-block: 24px; /* room for the halo at full volume, so it never covers the text around it */
   border: none;
   border-radius: 999px;
   background: var(--color-accent);
   color: var(--color-on-accent);
-  /* The halo: 16px at rest, growing with whoever is talking. */
-  box-shadow: 0 0 0 calc(16px + var(--level) * 36px) var(--color-accent-soft);
+  box-shadow: 0 0 0 var(--halo) var(--color-accent-soft);
   cursor: pointer;
   transition:
     transform 150ms,
@@ -19,8 +23,11 @@
     box-shadow 80ms;
 }
 
-.mic-button:hover {
-  transform: scale(1.03);
+/* Only on devices that really hover: on touch screens hover "sticks" after a tap. */
+@media (hover: hover) {
+  .mic-button:hover {
+    transform: scale(1.03);
+  }
 }
 
 .mic-button:active {
@@ -57,7 +64,7 @@
   --level: var(--agent-level, 0);
   background: var(--color-agent);
   color: var(--color-on-agent);
-  box-shadow: 0 0 0 calc(16px + var(--level) * 36px) var(--color-agent-soft);
+  box-shadow: 0 0 0 var(--halo) var(--color-agent-soft);
 }
 
 .mic-button[data-activity='agent'] .mic-button__icon {
@@ -94,4 +101,14 @@
 .mic-button[data-activity='muted'] .mic-button__icon {
   -webkit-mask-image: url('@assets/mic-off.svg');
   mask-image: url('@assets/mic-off.svg');
+}
+
+/* Phones: a smaller button and halo, so the whole call fits on one screen. */
+@media (max-width: 480px) {
+  .mic-button {
+    --size: 104px;
+    --halo-rest: 12px;
+    --halo-grow: 20px;
+    margin-block: 16px;
+  }
 }

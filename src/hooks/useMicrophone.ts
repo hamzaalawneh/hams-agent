@@ -79,6 +79,23 @@ export function useMicrophone() {
     return () => navigator.mediaDevices.removeEventListener('devicechange', onDeviceChange)
   }, [status, connect])
 
+  // The phone took the mic away (screen locked, a phone call, another app): once the page
+  // is visible again, open it again. The call gets the new stream through replaceMic.
+  useEffect(() => {
+    const track = stream?.getAudioTracks()[0]
+    if (!track) return
+
+    const reopenIfLost = () => {
+      if (track.readyState === 'ended' && document.visibilityState === 'visible') void connect()
+    }
+    track.addEventListener('ended', reopenIfLost) // not fired when we stop it ourselves
+    document.addEventListener('visibilitychange', reopenIfLost)
+    return () => {
+      track.removeEventListener('ended', reopenIfLost)
+      document.removeEventListener('visibilitychange', reopenIfLost)
+    }
+  }, [stream, connect])
+
   // Leaving the page: release the mic so the browser's mic indicator turns off.
   useEffect(() => release, [release])
 

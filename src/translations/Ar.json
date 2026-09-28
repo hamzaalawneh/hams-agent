@@ -27,14 +27,14 @@
       "reconnecting": "جارٍ إعادة الاتصال…",
       "ended": "انتهت المكالمة"
     },
-    "mutedTalking": "الميكروفون مكتوم، لذلك لا يسمعك المساعد."
+    "mutedTalking": "الميكروفون مكتوم، لذلك لا يسمعك المساعد.",
+    "soundBlocked": "اضغط لتشغيل الصوت من جديد"
   },
   "agent": {
     "state": {
       "listening": "يستمع",
       "thinking": "يفكّر…",
-      "speaking": "يتحدث",
-      "paused": "متوقف مؤقتاً أثناء حديثك"
+      "speaking": "يتحدث"
     }
   },
   "permission": {

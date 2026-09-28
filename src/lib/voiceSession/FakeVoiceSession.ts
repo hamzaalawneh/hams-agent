@@ -1,5 +1,6 @@
 import { SPEECH_LEVEL } from '@constants/audio'
 import type { Lang } from '@lib/i18n/context'
+import { createAudioContext } from '@utils/audioContexts'
 import { readLevel } from '@utils/audio'
 import { AGENT_LINES, type AgentLine } from './script'
 import type { AgentState, Caption, CallState, Metrics, VoiceSession } from './types'
@@ -9,14 +10,15 @@ const TICK_MS = 50 // how often we listen for the user and move the captions alo
 const END_OF_TURN_MS = 1000 // this much silence means the user has finished
 const REPLY_AFTER_MS = 3000 // the agent answers 3 s after the user's last word
 const RECONNECT_MS = 4000 // how long a simulated drop lasts before we're back
-const BARGE_IN_MS = 300 // talking over the agent this long pauses it
+const BARGE_IN_MS = 300 // talking over the agent this long interrupts it
 const NEW_STRETCH_MS = 250 // a gap longer than this starts a new stretch of voice
 
 /** The demo switch from the brief: degrade the network on purpose. Not part of the contract. */
 export type NetworkCondition = 'good' | 'poor'
 
-/** The contract, plus two demo controls only the fake has. */
+/** The contract, plus controls only the fake has. */
 export type FakeVoiceSession = VoiceSession & {
+  setLanguage(lang: Lang): void // a real agent's language would be session config
   setNetwork(condition: NetworkCondition): void
   dropConnection(): void
 }
@@ -37,24 +39,23 @@ type AudioGraph = {
   output: MediaStreamAudioDestinationNode // the agent's voice, sent to the app as a track
 }
 
-/** The line the agent is saying (or paused in the middle of). */
+/** The line the agent is saying right now. */
 type Speech = {
   line: AgentLine
   clip: AudioBuffer
   words: string[]
-  startedAt: number // AudioContext time the clip would have started at if never paused
-  pausedAt: number // seconds into the clip where the user interrupted
+  startedAt: number // AudioContext time the clip started
   shown: number // words already sent as a caption
 }
 
 /**
  * Plays the "server" side of a call: listens to the real mic, notices when the user
  * stops talking, thinks for a moment, then answers with a recorded line and captions.
- * If the user talks over the agent, it pauses, and carries on once they've finished.
+ * If the user talks over the agent, it stops mid-sentence and answers with its next line.
  * It never stops the mic tracks. The mic belongs to the caller (useMicrophone).
  */
 export function createFakeVoiceSession(lang: Lang): FakeVoiceSession {
-  const lines = AGENT_LINES[lang]
+  let lines = AGENT_LINES[lang]
   const listeners: { [E in keyof Events]: Set<(value: Events[E]) => void> } = {
     state: new Set(),
     agentState: new Set(),
@@ -129,8 +130,8 @@ export function createFakeVoiceSession(lang: Lang): FakeVoiceSession {
       if (!userTalking || now - lastVoiceAt > NEW_STRETCH_MS) voiceStartedAt = now
       userTalking = true
       lastVoiceAt = now
-      // The user talks over the agent: pause it (barge-in).
-      if (agentTalking && now - voiceStartedAt > BARGE_IN_MS) pauseSpeech()
+      // The user talks over the agent: it stops and lets them speak (barge-in).
+      if (agentTalking && now - voiceStartedAt > BARGE_IN_MS) interrupt()
       return
     }
 
@@ -138,18 +139,14 @@ export function createFakeVoiceSession(lang: Lang): FakeVoiceSession {
     if (userTalking && now - lastVoiceAt > END_OF_TURN_MS) {
       userTalking = false
       if (agentTalking) return // just a noise over the agent, not a real interruption
-      if (speech) {
-        play(speech.pausedAt) // we were interrupted: carry on from where we stopped
-      } else {
-        setAgentState('thinking')
-        after(REPLY_AFTER_MS - END_OF_TURN_MS, () => void speak())
-      }
+      setAgentState('thinking')
+      after(REPLY_AFTER_MS - END_OF_TURN_MS, () => void speak())
     }
   }
 
   /** Shows as many words as the audio has reached (a partial caption). */
   function revealCaption() {
-    if (!audio || !speech || !playing) return // paused: the caption waits too
+    if (!audio || !speech) return
     const progress = (audio.ctx.currentTime - speech.startedAt) / speech.clip.duration
     const count = Math.min(speech.words.length, Math.floor(progress * speech.words.length) + 1)
     if (count <= speech.shown) return
@@ -168,12 +165,12 @@ export function createFakeVoiceSession(lang: Lang): FakeVoiceSession {
     const clip = await loadClip(audio.ctx, line.audio)
     if (ended) return
 
-    speech = { line, clip, words: line.text.split(' '), startedAt: 0, pausedAt: 0, shown: 0 }
-    play(0)
+    speech = { line, clip, words: line.text.split(' '), startedAt: 0, shown: 0 }
+    play()
   }
 
-  /** Plays the current line from `offset` seconds in. */
-  function play(offset: number) {
+  /** Plays the current line. */
+  function play() {
     if (!audio || !speech) return
     const current = speech
 
@@ -181,27 +178,31 @@ export function createFakeVoiceSession(lang: Lang): FakeVoiceSession {
     source.buffer = current.clip
     source.connect(audio.output)
     source.onended = () => {
-      // Stopped by a pause or a hang-up rather than reaching the end: nothing to finish.
+      // Stopped by an interruption or a hang-up rather than reaching the end: nothing to finish.
       if (ended || playing !== source) return
       playing = null
       speech = null
       emit('transcript', { speaker: 'agent', text: current.line.text, final: true })
       setAgentState('listening')
     }
-    source.start(0, offset)
+    source.start()
 
     playing = source
-    current.startedAt = audio.ctx.currentTime - offset
+    current.startedAt = audio.ctx.currentTime
     setAgentState('speaking')
   }
 
-  /** The user interrupted: stop the audio but remember where we were. */
-  function pauseSpeech() {
-    if (!audio || !speech || !playing) return
-    speech.pausedAt = audio.ctx.currentTime - speech.startedAt
+  /** The user talked over the agent: cut the line short, like a person would. */
+  function interrupt() {
+    if (!speech || !playing) return
     const source = playing
     playing = null // set first, so onended knows this isn't the natural end
     source.stop()
+
+    // Keep what was actually said, with "…" to show it was cut off.
+    const spoken = speech.words.slice(0, speech.shown).join(' ')
+    speech = null
+    emit('transcript', { speaker: 'agent', text: `${spoken}…`, final: true })
     setAgentState('listening')
   }
 
@@ -209,7 +210,7 @@ export function createFakeVoiceSession(lang: Lang): FakeVoiceSession {
 
   async function connect({ mic }: { agentId: string; mic: MediaStream }) {
     setCallState('connecting')
-    const ctx = new AudioContext()
+    const ctx = createAudioContext()
     const micAnalyser = ctx.createAnalyser()
     micAnalyser.fftSize = micSamples.length
     audio = { ctx, micAnalyser, micSource: null, output: ctx.createMediaStreamDestination() }
@@ -271,6 +272,9 @@ export function createFakeVoiceSession(lang: Lang): FakeVoiceSession {
 
   return {
     connect,
+    setLanguage: (next) => {
+      lines = AGENT_LINES[next] // takes effect from the agent's next line
+    },
     replaceMic: async (mic) => attachMic(mic),
     setMuted: (value) => {
       muted = value

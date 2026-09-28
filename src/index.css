@@ -25,6 +25,8 @@ body {
 button {
   font: inherit;
   color: inherit;
+  touch-action: manipulation; /* no double-tap-to-zoom delay on phones */
+  -webkit-tap-highlight-color: transparent; /* we draw our own focus ring */
 }
 
 :focus-visible {

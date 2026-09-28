@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Lang } from '@lib/i18n/context'
 import {
   createFakeVoiceSession,
@@ -6,6 +6,7 @@ import {
   type NetworkCondition,
 } from '@lib/voiceSession/FakeVoiceSession'
 import type { AgentState, Caption, CallState, Metrics } from '@lib/voiceSession/types'
+import { resumeAllAudio } from '@utils/audioContexts'
 import { rateNetwork, type NetworkQuality } from '@utils/network'
 
 type ActiveCall = { session: FakeVoiceSession; mic: MediaStream }
@@ -20,7 +21,7 @@ function addCaption(captions: Caption[], caption: Caption): Caption[] {
   return replacesLast ? [...captions.slice(0, -1), caption] : [...captions, caption]
 }
 
-export function useCall(mic: MediaStream | null) {
+export function useCall(mic: MediaStream | null, lang: Lang) {
   const [call, setCall] = useState<ActiveCall | null>(null)
   const [state, setState] = useState<CallState | 'idle'>('idle')
   const [agentState, setAgentState] = useState<AgentState>('listening')
@@ -30,16 +31,21 @@ export function useCall(mic: MediaStream | null) {
   const [quality, setQuality] = useState<NetworkQuality>('good')
   const [reconnected, setReconnected] = useState(false)
   const [network, setNetworkState] = useState<NetworkCondition>('good')
+  const [speakerBlocked, setSpeakerBlocked] = useState(false)
+  const speakerRef = useRef<HTMLAudioElement | null>(null)
 
-  const start = useCallback((micStream: MediaStream, lang: Lang) => {
-    setCaptions([])
-    setMuted(false)
-    setAgentState('listening')
-    setQuality('good')
-    setReconnected(false)
-    setNetworkState('good')
-    setCall({ session: createFakeVoiceSession(lang), mic: micStream })
-  }, [])
+  const start = useCallback(
+    (micStream: MediaStream) => {
+      setCaptions([])
+      setMuted(false)
+      setAgentState('listening')
+      setQuality('good')
+      setReconnected(false)
+      setNetworkState('good')
+      setCall({ session: createFakeVoiceSession(lang), mic: micStream })
+    },
+    [lang],
+  )
 
   const hangUp = useCallback(() => setCall(null), [])
 
@@ -103,22 +109,49 @@ export function useCall(mic: MediaStream | null) {
     }
   }, [call])
 
+  // The app's language changed mid-call: the agent switches from its next line.
+  useEffect(() => {
+    call?.session.setLanguage(lang)
+  }, [call, lang])
+
   // Headset plugged in or out mid-call: give the session the new mic.
   useEffect(() => {
     if (call && mic && mic !== call.mic) void call.session.replaceMic(mic)
   }, [call, mic])
 
-  // Play the agent's voice.
+  // Play the agent's voice. Phones may refuse (autoplay rules): then we ask for a tap.
   useEffect(() => {
     if (!agentStream) return
     const speaker = new Audio()
     speaker.srcObject = agentStream
-    void speaker.play()
+    speakerRef.current = speaker
+    speaker.play().catch(() => setSpeakerBlocked(true))
+
+    // Back from the lock screen or another app: phones often pause our audio, so restart it.
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      speaker.play().catch(() => setSpeakerBlocked(true))
+      resumeAllAudio().catch(() => {}) // if this is refused too, the "tap for sound" button shows
+    }
+    document.addEventListener('visibilitychange', onVisible)
+
     return () => {
+      document.removeEventListener('visibilitychange', onVisible)
       speaker.pause()
       speaker.srcObject = null
+      speakerRef.current = null
+      setSpeakerBlocked(false)
     }
   }, [agentStream])
+
+  /** From the "tap to turn the sound back on" button: a tap is what phones need. */
+  const resumeSound = useCallback(() => {
+    resumeAllAudio().catch(() => {})
+    speakerRef.current
+      ?.play()
+      .then(() => setSpeakerBlocked(false))
+      .catch(() => {})
+  }, [])
 
   return {
     state,
@@ -129,10 +162,12 @@ export function useCall(mic: MediaStream | null) {
     quality,
     reconnected,
     network,
+    speakerBlocked,
     start,
     hangUp,
     toggleMute,
     setNetwork,
     dropConnection,
+    resumeSound,
   }
 }

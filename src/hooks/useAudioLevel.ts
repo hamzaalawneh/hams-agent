@@ -1,6 +1,7 @@
 import { useEffect, useState, type RefObject } from 'react'
 import { SPEECH_LEVEL } from '@constants/audio'
 import { readLevel } from '@utils/audio'
+import { createAudioContext } from '@utils/audioContexts'
 
 const STILL_TALKING_MS = 300 // bridge the tiny gaps between words
 
@@ -21,7 +22,7 @@ export function useAudioLevel(
     const element = target.current
     if (!stream || !element) return
 
-    const ctx = new AudioContext()
+    const ctx = createAudioContext()
     const analyser = ctx.createAnalyser()
     analyser.fftSize = 512
     const source = ctx.createMediaStreamSource(stream)

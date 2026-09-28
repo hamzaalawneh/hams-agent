@@ -64,8 +64,8 @@
   --color-agent: #f0b060;
   --color-agent-soft: rgb(240 176 96 / 0.18);
   --color-on-agent: #161512;
-  --color-danger: #ef6a5f;
-  --color-on-danger: #161512;
+  --color-danger: #e5484d;
+  --color-on-danger: #ffffff;
   --color-ok: #5cc98a;
   --color-warn: #e8a33d;
 }

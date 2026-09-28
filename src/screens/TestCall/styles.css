@@ -1,7 +1,9 @@
+/* Exactly one screen tall: during a call the captions shrink (and scroll inside) rather
+   than pushing Hang up off the bottom of a phone screen. */
 .test-call {
   display: flex;
   flex-direction: column;
-  min-block-size: 100dvh;
+  block-size: 100dvh;
   /* Keep content clear of the notch / home indicator on phones. */
   padding-block: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-bottom));
   padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
@@ -23,12 +25,39 @@
 
 .test-call__main {
   flex: 1;
+  min-block-size: 0;
+  overflow-y: auto; /* tiny screens only: everything else fits */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 32px;
+  /* Anchored to the top, not centred: when captions appear below, nothing above moves. */
+  padding-block-start: clamp(8px, 5dvh, 48px);
   text-align: center;
+}
+
+.test-call__pill-slot {
+  min-block-size: 32px;
+}
+
+/* The mic is the only thing in the row's flow, so it stays exactly centred. */
+.test-call__buttons {
+  position: relative;
+}
+
+.test-call__hang-up {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: calc(100% + 64px); /* clear of the mic's halo at full volume */
+  translate: 0 -50%;
+}
+
+/* Tall enough for either the before-call explanation or the in-call status. */
+.test-call__message-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-block-size: 96px;
 }
 
 .test-call__title {
@@ -115,17 +144,26 @@
   font-weight: 500;
 }
 
-.hang-up {
+/* Big and obvious: without sound the call is useless, so this is the one thing to do. */
+.sound-blocked {
   min-block-size: 48px;
-  padding-inline: 28px;
+  padding-inline: 24px;
   border: none;
   border-radius: 999px;
-  background: var(--color-danger);
-  color: var(--color-on-danger);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
   font-weight: 600;
   cursor: pointer;
 }
 
-.hang-up:hover {
-  filter: brightness(1.08);
+/* Phones: tighter spacing. */
+@media (max-width: 480px) {
+  .test-call__header,
+  .test-call__main {
+    gap: 16px;
+  }
+
+  .test-call__hang-up {
+    inset-inline-start: calc(100% + 40px); /* the phone halo is smaller */
+  }
 }

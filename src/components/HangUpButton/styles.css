@@ -1,0 +1,30 @@
+.hang-up-button {
+  display: grid;
+  place-items: center;
+  inline-size: 64px;
+  block-size: 64px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-danger);
+  color: var(--color-on-danger);
+  cursor: pointer;
+  transition: transform 150ms;
+}
+
+@media (hover: hover) {
+  .hang-up-button:hover {
+    transform: scale(1.06);
+  }
+}
+
+.hang-up-button:active {
+  transform: scale(0.94);
+}
+
+.hang-up-button__icon {
+  inline-size: 32px;
+  block-size: 32px;
+  background-color: currentColor;
+  -webkit-mask: url('@assets/phone-hangup.svg') no-repeat center / contain;
+  mask: url('@assets/phone-hangup.svg') no-repeat center / contain;
+}

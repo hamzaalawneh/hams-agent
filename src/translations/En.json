@@ -27,14 +27,14 @@
       "reconnecting": "Reconnecting…",
       "ended": "Call ended"
     },
-    "mutedTalking": "You’re muted, so the agent can’t hear you."
+    "mutedTalking": "You’re muted, so the agent can’t hear you.",
+    "soundBlocked": "Tap to turn the sound back on"
   },
   "agent": {
     "state": {
       "listening": "Listening",
       "thinking": "Thinking…",
-      "speaking": "Speaking",
-      "paused": "Paused while you talk"
+      "speaking": "Speaking"
     }
   },
   "permission": {
