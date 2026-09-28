@@ -43,7 +43,9 @@ is a scripted fake built against a fixed `VoiceSession` interface.
 - No routing/state library assumed yet — keep dependencies minimal unless a real
   need shows up.
 - Linting is `oxlint` (Rust-based, fast) via `npm run lint` — no ESLint.
-  Formatting is Prettier (`npm run format` / `format:check`).
+  Formatting is Prettier (`npm run format` / `format:check`), set to run on
+  save via `.vscode/settings.json` (needs the Prettier extension,
+  recommended in `.vscode/extensions.json`).
 
 ## Non-goals
 
