@@ -1,4 +1,4 @@
-import { useLanguage } from '@lib/i18n/LanguageProvider'
+import { useLanguage } from '@hooks/useLanguage'
 import './styles.css'
 
 export function LanguageToggle() {

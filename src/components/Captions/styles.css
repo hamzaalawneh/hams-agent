@@ -1,0 +1,47 @@
+.captions {
+  display: flex;
+  flex-direction: column-reverse;
+  inline-size: min(520px, 100%);
+  max-block-size: 30dvh;
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  text-align: start;
+}
+
+.captions__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.caption + .caption,
+.captions__list + .caption {
+  margin-block-start: 12px;
+}
+
+.caption__speaker {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.caption[data-speaker='agent'] .caption__speaker {
+  color: var(--color-agent);
+}
+
+.caption__text {
+  margin: 2px 0 0;
+  font-size: 17px;
+  line-height: 1.6;
+  /* Each line picks its own direction from its first letter (dir="auto"), and runs of
+     English inside Arabic (or the reverse) are laid out correctly. */
+  unicode-bidi: plaintext;
+}
+
+.caption--live .caption__text {
+  color: var(--color-text-muted);
+}

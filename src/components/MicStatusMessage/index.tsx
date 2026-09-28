@@ -1,4 +1,5 @@
-import { useLanguage, type TranslationKey } from '@lib/i18n/LanguageProvider'
+import { useLanguage } from '@hooks/useLanguage'
+import type { TranslationKey } from '@lib/i18n/context'
 import type { MicStatus } from '@hooks/useMicrophone'
 import { detectBrowser } from '@utils/browser'
 import './styles.css'

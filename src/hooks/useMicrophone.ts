@@ -28,10 +28,11 @@ export function useMicrophone() {
     setStream(next)
   }, [])
 
-  const connect = useCallback(async () => {
+  /** Opens the best mic. Resolves with the stream, or null if it failed. */
+  const connect = useCallback(async (): Promise<MediaStream | null> => {
     if (!navigator.mediaDevices?.getUserMedia) {
       setStatus('unsupported')
-      return
+      return null
     }
 
     const attempt = ++attemptRef.current
@@ -42,16 +43,26 @@ export function useMicrophone() {
       const { stream: next, headsetId } = await openBestMic()
       if (attempt !== attemptRef.current) {
         stopStream(next) // a newer connect() started while we waited; it wins
-        return
+        return null
       }
       replaceStream(next)
       headsetIdRef.current = headsetId
       setStatus('ready')
+      return next
     } catch (error) {
-      if (attempt !== attemptRef.current) return
+      if (attempt !== attemptRef.current) return null
       replaceStream(null)
       setStatus(micErrorFrom(error))
+      return null
     }
+  }, [replaceStream])
+
+  /** Stops the mic (the browser's mic indicator goes off) and goes back to idle. */
+  const release = useCallback(() => {
+    attemptRef.current++ // a connect() still in flight will throw its stream away
+    replaceStream(null)
+    headsetIdRef.current = null
+    setStatus('idle')
   }, [replaceStream])
 
   // Headset plugged in or out: reconnect if the best mic is now a different one.
@@ -69,15 +80,10 @@ export function useMicrophone() {
   }, [status, connect])
 
   // Leaving the page: release the mic so the browser's mic indicator turns off.
-  useEffect(() => {
-    return () => {
-      attemptRef.current++ // a connect() still in flight will throw its stream away
-      stopStream(streamRef.current)
-    }
-  }, [])
+  useEffect(() => release, [release])
 
   // The name of the mic in use, e.g. "AirPods Pro".
   const micLabel = stream?.getAudioTracks()[0]?.label || null
 
-  return { status, stream, micLabel, connect }
+  return { status, stream, micLabel, connect, release }
 }

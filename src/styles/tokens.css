@@ -21,6 +21,11 @@
   --color-accent: #3a3eb8;
   --color-accent-soft: rgb(58 62 184 / 0.14);
   --color-on-accent: #ffffff;
+  --color-agent: #b5602a;
+  --color-agent-soft: rgb(181 96 42 / 0.16);
+  --color-on-agent: #ffffff;
+  --color-danger: #c2362b;
+  --color-on-danger: #ffffff;
 }
 
 /* White-label: a neutral, cooler base a customer can drop their brand colour into. */
@@ -34,6 +39,11 @@
   --color-accent: #0f766e;
   --color-accent-soft: rgb(15 118 110 / 0.14);
   --color-on-accent: #ffffff;
+  --color-agent: #6d4ac2;
+  --color-agent-soft: rgb(109 74 194 / 0.16);
+  --color-on-agent: #ffffff;
+  --color-danger: #c62828;
+  --color-on-danger: #ffffff;
 }
 
 /* Dark: warm near-black so it still feels like the same product as the cream theme. */
@@ -47,4 +57,9 @@
   --color-accent: #9296f5;
   --color-accent-soft: rgb(146 150 245 / 0.18);
   --color-on-accent: #161512;
+  --color-agent: #f0b060;
+  --color-agent-soft: rgb(240 176 96 / 0.18);
+  --color-on-agent: #161512;
+  --color-danger: #ef6a5f;
+  --color-on-danger: #161512;
 }

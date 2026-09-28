@@ -1,18 +1,34 @@
 .mic-button {
+  --level: 0; /* which live level drives the halo; picked per activity below */
+  position: relative;
   display: grid;
   place-items: center;
   inline-size: 128px;
   block-size: 128px;
+  margin-block: 24px; /* room for the halo at full volume, so it never covers the text around it */
   border: none;
   border-radius: 999px;
   background: var(--color-accent);
   color: var(--color-on-accent);
-  /* Soft halo in the accent colour so the button reads as "the one thing to press". */
-  box-shadow: 0 0 0 16px var(--color-accent-soft);
+  /* The halo: 16px at rest, growing with whoever is talking. */
+  box-shadow: 0 0 0 calc(16px + var(--level) * 36px) var(--color-accent-soft);
   cursor: pointer;
   transition:
     transform 150ms,
-    box-shadow 150ms;
+    background-color 150ms,
+    box-shadow 80ms;
+}
+
+.mic-button:hover {
+  transform: scale(1.03);
+}
+
+.mic-button:active {
+  transform: scale(0.97);
+}
+
+.mic-button:focus-visible {
+  outline-offset: 22px;
 }
 
 .mic-button__icon {
@@ -24,15 +40,53 @@
   mask: url('@assets/mic.svg') no-repeat center / contain;
 }
 
-.mic-button:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 0 20px var(--color-accent-soft);
+/* ---- During a call ---- */
+
+/* You're talking: the halo follows your voice. */
+.mic-button[data-activity='user'] {
+  --level: var(--user-level, 0);
 }
 
-.mic-button:active {
-  transform: scale(0.97);
+/* The agent is talking: its own colour and a waveform icon, so it isn't colour alone. */
+.mic-button[data-activity='agent'] {
+  --level: var(--agent-level, 0);
+  background: var(--color-agent);
+  color: var(--color-on-agent);
+  box-shadow: 0 0 0 calc(16px + var(--level) * 36px) var(--color-agent-soft);
 }
 
-.mic-button:focus-visible {
-  outline-offset: 22px;
+.mic-button[data-activity='agent'] .mic-button__icon {
+  -webkit-mask-image: url('@assets/waveform.svg');
+  mask-image: url('@assets/waveform.svg');
+}
+
+/* The agent is thinking: a ring spins around the button. */
+.mic-button[data-activity='thinking']::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  border-block-start-color: var(--color-accent);
+  animation: mic-button-spin 900ms linear infinite;
+}
+
+@keyframes mic-button-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* Muted: a quiet, crossed-out mic. */
+.mic-button[data-activity='muted'] {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  box-shadow:
+    0 0 0 1px var(--color-border),
+    0 0 0 16px transparent;
+}
+
+.mic-button[data-activity='muted'] .mic-button__icon {
+  -webkit-mask-image: url('@assets/mic-off.svg');
+  mask-image: url('@assets/mic-off.svg');
 }

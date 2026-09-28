@@ -1,12 +1,19 @@
 import './styles.css'
 import type { MicButtonProps } from './types'
 
-export function MicButton({ label, onClick }: MicButtonProps) {
-  // The label carries the meaning for screen readers; the icon is pure
-  // decoration (a CSS mask, not an <svg> in the DOM), so there's nothing
-  // here for assistive tech to read twice or get out of sync with.
+// Before a call: starts it. During a call: toggles mute, and doubles as the visualiser.
+// The halo size comes from --user-level / --agent-level, written by useAudioLevel.
+export function MicButton({ ref, label, activity = 'idle', pressed, onClick }: MicButtonProps) {
   return (
-    <button type="button" className="mic-button" aria-label={label} onClick={onClick}>
+    <button
+      ref={ref}
+      type="button"
+      className="mic-button"
+      data-activity={activity}
+      aria-label={label}
+      aria-pressed={pressed}
+      onClick={onClick}
+    >
       <span className="mic-button__icon" aria-hidden="true" />
     </button>
   )

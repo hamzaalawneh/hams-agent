@@ -27,13 +27,15 @@
       "connected": "Connected",
       "reconnecting": "Reconnecting…",
       "ended": "Call ended"
-    }
+    },
+    "mutedTalking": "You’re muted, so the agent can’t hear you."
   },
   "agent": {
     "state": {
       "listening": "Listening",
-      "thinking": "Thinking",
-      "speaking": "Speaking"
+      "thinking": "Thinking…",
+      "speaking": "Speaking",
+      "paused": "Paused while you talk"
     }
   },
   "permission": {
@@ -53,6 +55,23 @@
       "ios": "Tap “aA” in the address bar › Website Settings › Microphone › Allow. Using another browser? Open iPhone Settings › that browser › Microphone.",
       "android": "Tap the icon to the left of the address bar › Permissions › Microphone › Allow, then try again.",
       "other": "Allow the microphone in your browser’s site settings, then try again."
+    }
+  },
+  "captions": {
+    "label": "Live captions",
+    "agent": "Agent",
+    "user": "You"
+  },
+  "network": {
+    "fair": "Fair connection",
+    "poor": "Weak connection, audio may break up",
+    "reconnected": "Reconnected",
+    "reconnectingHint": "Hang tight, you don’t need to do anything.",
+    "simulator": {
+      "label": "Test conditions",
+      "good": "Good network",
+      "poor": "Poor network",
+      "drop": "Drop connection"
     }
   }
 }

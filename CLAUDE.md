@@ -22,7 +22,8 @@ is a scripted fake built against a fixed `VoiceSession` interface.
   `requestAnimationFrame` loops — on hang-up, unmount, or the panel closing mid-call.
 - **Mobile web is first-class**, not an afterthought: iOS Safari and Android Chrome
   autoplay/gesture rules, backgrounding, small screens, safe areas.
-- **Arabic-first.** Full English/Arabic UI, RTL layout, and correct rendering of
+- **Arabic-first.** Arabic is the default language (English only if the visitor
+  picks it). Full English/Arabic UI, RTL layout, and correct rendering of
   mixed Arabic/English captions. Don't bolt RTL on at the end.
 - **Accessibility and theming are design constraints**, not polish — design tokens,
   runtime theme switching (brand / white-label / dark), and screen-reader-friendly
@@ -34,13 +35,20 @@ is a scripted fake built against a fixed `VoiceSession` interface.
   readers, correct focus order, and a minimum 44px touch target. Never make
   sound the only channel, and never make sight the only channel.
 - **Structure:** each screen lives in its own folder under `src/screens/<Screen>/`
-  with `index.tsx`, `styles.css`, and `types.ts`.
+  with `index.tsx`, `styles.css`, and `types.ts` (only when it actually has types —
+  no empty placeholder files).
 - **Components:** any reusable component goes under `src/components/<Component>/`,
   with the same `index.tsx` / `styles.css` / `types.ts` split as screens. Don't
   build one-off components inline inside a screen if it's reusable — give it its
   own folder there instead.
+- **Keep JSX files small.** A screen or component should be mostly markup. When
+  its logic grows (state, derived values, handlers), move it into a hook in
+  `src/hooks/` (e.g. `useTestCall` for the TestCall screen) and let the JSX just
+  read the values the hook returns.
 - **Hooks:** custom React hooks go in `src/hooks/`, one file per hook, named
   `useThing.ts` (e.g. `useMicrophone.ts`).
+- **No dead code.** Delete unused files, exports, translation keys and styles
+  instead of leaving them around.
 - **Constants:** shared constant values go in `src/constants/`, one file per
   kind. **Every regular expression** lives in `src/constants/regex.ts` as a named,
   commented export — never write a regex literal inline in a component, hook or util.

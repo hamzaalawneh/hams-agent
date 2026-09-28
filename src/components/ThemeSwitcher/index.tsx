@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState } from 'react'
-import { useLanguage, type TranslationKey } from '@lib/i18n/LanguageProvider'
+import { useLanguage } from '@hooks/useLanguage'
+import type { TranslationKey } from '@lib/i18n/context'
 import './styles.css'
 import type { Theme } from './types'
 
