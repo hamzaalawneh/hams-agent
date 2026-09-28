@@ -38,8 +38,6 @@ export function TestCallScreen() {
       </header>
 
       <main className="test-call__main">
-        <h1 className="test-call__title">{t('app.title')}</h1>
-
         {/* Slots keep their size whether or not there's anything in them, so nothing
             on the screen moves when a call starts or ends. */}
         <div className="test-call__pill-slot">
