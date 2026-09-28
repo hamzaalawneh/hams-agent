@@ -3,8 +3,7 @@
     "title": "Test Call"
   },
   "mic": {
-    "start": "Start test call",
-    "hint": "Tap the mic to talk to your agent"
+    "start": "Start test call"
   },
   "theme": {
     "label": "Theme",
@@ -38,8 +37,22 @@
     }
   },
   "permission": {
-    "explain": "We need your microphone to start the test call. Nothing is recorded or shared.",
-    "denied": "Microphone access is blocked. Enable it in your browser's site settings and try again.",
-    "noDevice": "No microphone was found. Connect one and try again."
+    "explain": "Tap the mic to start. Your browser will ask to use your microphone. We only listen during the test call.",
+    "requesting": "Choose “Allow” in your browser’s prompt.",
+    "ready": "Microphone ready.",
+    "using": "Using:",
+    "denied": "Microphone access isn’t allowed yet.",
+    "noDevice": "No microphone found. Plug one in and we’ll pick it up automatically.",
+    "unavailable": "We couldn’t start your microphone. Another app may be using it.",
+    "unsupported": "This page can’t use the microphone. Open it over https in an up-to-date browser.",
+    "retry": "Try again",
+    "help": {
+      "chrome": "Click the icon to the left of the address bar, set Microphone to Allow, then try again.",
+      "firefox": "Click the crossed-out microphone in the address bar, remove the block, then try again.",
+      "safari": "Open Safari › Settings for This Website, set Microphone to Allow, then try again.",
+      "ios": "Tap “aA” in the address bar › Website Settings › Microphone › Allow. Using another browser? Open iPhone Settings › that browser › Microphone.",
+      "android": "Tap the icon to the left of the address bar › Permissions › Microphone › Allow, then try again.",
+      "other": "Allow the microphone in your browser’s site settings, then try again."
+    }
   }
 }

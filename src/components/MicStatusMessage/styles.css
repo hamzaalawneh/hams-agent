@@ -1,0 +1,40 @@
+.mic-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-inline-size: 36ch;
+  text-align: center;
+}
+
+.mic-status__message {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+/* Problems use the full text colour so they don't read as a quiet footnote. */
+.mic-status[data-problem='true'] .mic-status__message {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.mic-status__help {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.mic-status__retry {
+  min-block-size: 44px;
+  padding-inline: 20px;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-accent);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.mic-status__retry:hover {
+  background: var(--color-accent-soft);
+}

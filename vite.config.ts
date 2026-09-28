@@ -12,6 +12,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@assets': src('assets'),
+      '@constants': src('constants'),
+      '@hooks': src('hooks'),
       '@lib': src('lib'),
       '@screens': src('screens'),
       '@components': src('components'),

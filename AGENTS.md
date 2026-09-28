@@ -39,6 +39,11 @@ is a scripted fake built against a fixed `VoiceSession` interface.
   with the same `index.tsx` / `styles.css` / `types.ts` split as screens. Don't
   build one-off components inline inside a screen if it's reusable — give it its
   own folder there instead.
+- **Hooks:** custom React hooks go in `src/hooks/`, one file per hook, named
+  `useThing.ts` (e.g. `useMicrophone.ts`).
+- **Constants:** shared constant values go in `src/constants/`, one file per
+  kind. **Every regular expression** lives in `src/constants/regex.ts` as a named,
+  commented export — never write a regex literal inline in a component, hook or util.
 - **Utils:** shared, framework-agnostic helper functions (formatting, guards, small
   calculations — not components, not hooks) go in `src/utils/`, one file per
   concern. Don't duplicate a helper inside a screen or component if it belongs here.
@@ -55,7 +60,7 @@ is a scripted fake built against a fixed `VoiceSession` interface.
 ## Stack
 
 - React + TypeScript, Vite
-- Path aliases in `vite.config.ts` + `tsconfig.app.json`: `@lib`, `@screens`,
+- Path aliases in `vite.config.ts` + `tsconfig.app.json`: `@lib`, `@hooks`, `@constants`, `@screens`,
   `@components`, `@utils`, `@translations`, `@assets` — all resolve to the
   matching `src/` folder. Use them instead of `../../` relative imports.
 - No routing/state library assumed yet — keep dependencies minimal unless a real
